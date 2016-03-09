@@ -25,12 +25,17 @@ class Draw extends noflo.LoggingComponent
         required: false
 
     @inPorts.tick.on 'data', (tick) =>
-      if @context
-        @parse @commands
-        return
-      @sendLog
-        loglevel: 'error'
-        message: 'Received commands but there is not 2d context attached.'
+      console.log 'Draw', 'tick', @canvas
+      try
+        if @context
+          @parse @commands
+          return
+        @sendLog
+          loglevel: 'error'
+          message: 'Received commands but there is not 2d context attached.'
+      catch e
+        console.log 'Draw e', e
+        console.log e.stack
 
     @inPorts.tick.on 'begingroup', (group) =>
       @outPorts.canvas.beginGroup group
@@ -47,10 +52,12 @@ class Draw extends noflo.LoggingComponent
       @clearevery = data
 
     @inPorts.canvas.on 'data', (canvas) =>
+      console.log 'Draw', 'canvas', canvas
       @canvas = canvas
       @context = canvas.getContext '2d'
       
     @inPorts.commands.on 'data', (commands, i) =>
+      console.log 'Draw', 'commands'
       @commands[i] = commands
       if @drawevery
         @parse @commands
@@ -68,6 +75,7 @@ class Draw extends noflo.LoggingComponent
       @context.clearRect 0, 0, @canvas.width, @canvas.height
     @parseThing commands
     @outPorts.canvas.send @canvas
+    @outPorts.canvas.disconnect()
 
   # Recursively parse things and arrays of things
   parseThing: (thing, before, after) =>
@@ -244,6 +252,7 @@ class Draw extends noflo.LoggingComponent
       return
     if drawimage.destpoint?
       p = drawimage.destpoint
+      console.log 'drawimg', drawimage.image
       @context.drawImage drawimage.image, p.x, p.y
       return
     # Default
